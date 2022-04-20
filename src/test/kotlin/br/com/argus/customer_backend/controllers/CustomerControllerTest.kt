@@ -22,7 +22,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.context.ActiveProfiles
@@ -46,9 +45,9 @@ class CustomerControllerTest {
     @MockkBean
     lateinit var customerRepository: CustomerRepository
 
-    val passwordEncoder = BCryptPasswordEncoder()
+    private val passwordEncoder = BCryptPasswordEncoder()
 
-    val mapper: ObjectMapper = ObjectMapper()
+    private val mapper: ObjectMapper = ObjectMapper()
 
     @Test
     @DisplayName("should return status code 201 and customer data when valid payload were given")
@@ -190,11 +189,9 @@ class CustomerControllerTest {
     @DisplayName("should return 404 error with code 003 when given ID does not exists in database")
     fun testGetCustomerById404() {
 
-        val id = ObjectId.get()
+        every { customerRepository.findById(any()) } returns Optional.empty()
 
-        every { customerRepository.findById(id) } returns Optional.empty()
-
-        val raw = mockMvc.perform(get("/customers/" + id.toHexString())
+        val raw = mockMvc.perform(get("/customers/${ObjectId.get()}")
             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -207,5 +204,72 @@ class CustomerControllerTest {
         val res = mapper.readValue<ErrorResponseDTO>(raw)
 
         assertEquals("003", res.code)
+    }
+
+    @Test
+    @DisplayName("should return customer info when valid and existent customer CPF were given")
+    fun testGetCustomerByCPF200() {
+
+        val customer = Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
+
+        every { customerRepository.findByCpf(any()) } returns Optional.of(customer)
+
+        val res = mockMvc.perform(get("/customers?cpf=" + customer.cpf)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.cpf").isString)
+            .andExpect(jsonPath("$.id").isString)
+            .andExpect(jsonPath("$.email").isString)
+            .andExpect(jsonPath("$.name").isString)
+            .andExpect(jsonPath("$.profilePicUri").isString)
+            .andExpect(jsonPath("$.favs").isMap)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val customerRes = mapper.readValue<CustomerResponseDTO>(res)
+
+        assertEquals(customer.cpf, customerRes.cpf)
+    }
+
+    @Test
+    @DisplayName("should return 404 error with code 003 when given cpf does not own a correspondent customer registered in database")
+    fun testGetCustomerByCPF404() {
+
+        every { customerRepository.findByCpf(any()) } returns Optional.empty()
+
+        val raw = mockMvc.perform(get("/customers?cpf=72646019513")
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.code").isString)
+            .andExpect(jsonPath("$.message").isString)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val res = mapper.readValue<ErrorResponseDTO>(raw)
+
+        assertEquals("003", res.code)
+    }
+
+    @Test
+    @DisplayName("should return 400 error with code 001 when given cpf are invalid or malformed")
+    fun testGetCustomerByCPF400() {
+
+        val raw = mockMvc.perform(get("/customers?cpf=testecpf")
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.code").isString)
+            .andExpect(jsonPath("$.message").isString)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val res = mapper.readValue<ErrorResponseDTO>(raw)
+
+        assertEquals("001", res.code)
     }
 }

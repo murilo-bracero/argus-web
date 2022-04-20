@@ -5,7 +5,7 @@ import javax.validation.Constraint
 import javax.validation.Payload
 import kotlin.reflect.KClass
 
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [CpfValidator::class])
 @MustBeDocumented

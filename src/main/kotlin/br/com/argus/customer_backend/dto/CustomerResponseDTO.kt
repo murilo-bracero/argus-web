@@ -7,4 +7,6 @@ class CustomerResponseDTO (
   val email: String,
   val profilePicUri: String,
   val favs: Map<String, String> = HashMap()
-)
+) {
+  constructor(): this("", "", "", "", "", HashMap())
+}

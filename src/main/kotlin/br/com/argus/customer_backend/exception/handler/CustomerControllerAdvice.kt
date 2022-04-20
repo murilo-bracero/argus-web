@@ -23,9 +23,9 @@ class CustomerControllerAdvice {
         return ErrorResponseDTO("001", message)
     }
 
-    @ExceptionHandler(value = [RuntimeException::class])
+    @ExceptionHandler(value = [Exception::class])
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    fun handleRuntimeException(ex: RuntimeException): ErrorResponseDTO {
+    fun handleRuntimeException(ex: Exception): ErrorResponseDTO {
         logger.error{"An unknown error occurred: $ex"}
 
         return ErrorResponseDTO("099", "An error occurred while processing your request, please try again later")
