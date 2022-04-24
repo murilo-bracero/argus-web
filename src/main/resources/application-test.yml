@@ -2,3 +2,11 @@ server:
   port: 8080
   servlet:
     context-path: /argusweb
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+  mongodb:
+    embedded:
+      version: 4.0.2

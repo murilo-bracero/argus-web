@@ -5,7 +5,9 @@ import br.com.argus.customer_backend.dto.CustomerResponseDTO
 import br.com.argus.customer_backend.dto.ErrorResponseDTO
 import br.com.argus.customer_backend.models.Customer
 import br.com.argus.customer_backend.repositories.CustomerRepository
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mongodb.MongoWriteException
 import com.mongodb.ServerAddress
@@ -22,6 +24,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.context.ActiveProfiles
@@ -272,4 +276,110 @@ class CustomerControllerTest {
 
         assertEquals("001", res.code)
     }
+
+    @Test
+    @DisplayName("should return customer info when valid and existent customer Email were given")
+    fun testGetCustomerByEmail200() {
+
+        val customer = Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
+
+        every { customerRepository.findByEmail(any()) } returns Optional.of(customer)
+
+        val res = mockMvc.perform(get("/customers?email=" + customer.email)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.cpf").isString)
+            .andExpect(jsonPath("$.id").isString)
+            .andExpect(jsonPath("$.email").isString)
+            .andExpect(jsonPath("$.name").isString)
+            .andExpect(jsonPath("$.profilePicUri").isString)
+            .andExpect(jsonPath("$.favs").isMap)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val customerRes = mapper.readValue<CustomerResponseDTO>(res)
+
+        assertEquals(customer.email, customerRes.email)
+    }
+    @Test
+    @DisplayName("should return 404 error with code 003 when given email does not own a correspondent customer registered in database")
+    fun testGetCustomerByEmail404() {
+
+        every { customerRepository.findByEmail(any()) } returns Optional.empty()
+
+        val raw = mockMvc.perform(get("/customers?email=teste2@email.com")
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.code").isString)
+            .andExpect(jsonPath("$.message").isString)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val res = mapper.readValue<ErrorResponseDTO>(raw)
+
+        assertEquals("003", res.code)
+    }
+
+    @Test
+    @DisplayName("should return customers when required params were given")
+    fun testQueryCustomersByName() {
+
+        val customers = listOf(
+            Customer(ObjectId(), "54215478545", "Generic Name 2", "email2@email.com", "passwordhash", "", HashMap()),
+            Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap()),
+        )
+
+        every { customerRepository.findByNameLike(any(), any()) } returns PageImpl(customers)
+
+        val res = mockMvc.perform(get("/customers?name=Generic")
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.totalElements").isNumber)
+            .andExpect(jsonPath("$.totalPages").isNumber)
+            .andExpect(jsonPath("$.content").isArray)
+            .andReturn()
+            .response
+            .contentAsString
+
+        println(res)
+
+        val pageRes = mapper.readValue<JsonNode>(res)
+
+        assertEquals(2, pageRes.get("totalElements").asInt())
+        assertEquals(1, pageRes.get("totalPages").asInt())
+        assertEquals(2, (pageRes.get("content") as ArrayNode).size())
+    }
+
+    @Test
+    @DisplayName("should return 400 with error code 004 when invalid direction were given")
+    fun testQueryCustomersByName400() {
+
+        val customers = listOf(
+            Customer(ObjectId(), "54215478545", "Generic Name 2", "email2@email.com", "passwordhash", "", HashMap()),
+            Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap()),
+        )
+
+        every { customerRepository.findByNameLike(any(), any()) } returns PageImpl(customers)
+
+        val raw = mockMvc.perform(get("/customers?name=Generic&order=FRE")
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.code").isString)
+            .andExpect(jsonPath("$.message").isString)
+            .andReturn()
+            .response
+            .contentAsString
+
+        val res = mapper.readValue<ErrorResponseDTO>(raw)
+
+        assertEquals("004", res.code)
+
+    }
+
 }
