@@ -1,0 +1,23 @@
+security:
+  jwt:
+    refresh_expiration: 600
+    expiration: 300
+    secret: secret
+  secret-key: SQ56EgzwqTOddVKy3c3bfqugDkUxRxqy546Dc7eeLhAz3bARXHNc
+  secret-size: 20
+
+server:
+  port: 8080
+  servlet:
+    context-path: /argusweb
+
+service-urls:
+  customer-service: http://localhost:8080/argusweb/customers
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+  mongodb:
+    embedded:
+      version: 4.0.2

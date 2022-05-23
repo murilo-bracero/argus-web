@@ -1,0 +1,20 @@
+security:
+  jwt:
+    refresh_expiration: ${REFRESH_JWT_EXPIRATION}
+    expiration: ${JWT_EXPIRATION}
+    secret: ${JWT_SECRET}
+  secret-key: ${SECRET_KEY}
+  secret-size: ${SECRET_SIZE}
+
+server:
+  port: ${APP_PORT}
+  servlet:
+    context-path: /argusweb
+
+service-urls:
+  customer-service: ${CUSTOMER_SERVICE_URL}
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
