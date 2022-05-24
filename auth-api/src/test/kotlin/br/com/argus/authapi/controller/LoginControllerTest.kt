@@ -131,7 +131,7 @@ class LoginControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 401 with no header if login credentials are right but mfa token is missing")
+    @DisplayName("Should return 401 with header if login credentials are right but mfa token is missing")
     fun login401LoginMfa(){
         val req = LoginRequestDTO("generic.email@email.com", "genericpass", SystemEnum.CUSTOMER)
 

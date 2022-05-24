@@ -26,6 +26,8 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation ("io.github.microutils:kotlin-logging-jvm:2.0.11")
 	implementation("com.auth0:java-jwt:3.18.1")
+	implementation("dev.turingcomplete:kotlin-onetimepassword:2.2.0")
+	implementation("commons-codec:commons-codec:1.15")
 	runtimeOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude("org.mockito:mockito-core")

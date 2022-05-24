@@ -6,6 +6,7 @@ import br.com.argus.authapi.model.UserCredential
 import br.com.argus.authapi.repository.UserCredentialRepository
 import br.com.argus.authapi.service.CredentialsService
 import br.com.argus.authapi.service.EncryptionService
+import org.apache.commons.codec.binary.Base32
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -42,29 +43,27 @@ class CredentialsServiceImpl(
         val creds = userCredentialRepository.findByUserIdAndSystem(userId, system)
             .orElseThrow()
 
-        if(creds.mfaEnabled){
-            creds.secret = encryptionService.decrypt(creds.secret)
-        }
-
-        if(creds.refreshToken.isNotEmpty()){
-            creds.refreshToken = encryptionService.decrypt(creds.refreshToken)
-        }
-
+        creds.secret = encryptionService.decrypt(creds.secret)
+        creds.refreshToken = encryptionService.decrypt(creds.refreshToken)
         return creds
     }
 
     override fun update(newCreds: UserCredential) : String? {
         var secret: String? = null
 
+        // user has deactivated mfa
+        if(!newCreds.mfaEnabled && newCreds.secret.isNotEmpty()){
+            newCreds.secret = ""
+        }
+
+        // user has enabled mfa for the first time
         if(newCreds.mfaEnabled && newCreds.secret.isEmpty()){
-            secret = encryptionService.generateSecret()
-            newCreds.secret = encryptionService.encrypt(secret)
+            newCreds.secret = encryptionService.generateSecret()
+            secret = Base32().encodeAsString(newCreds.secret.toByteArray(Charsets.UTF_8))
         }
 
-        if(newCreds.refreshToken.isNotEmpty()){
-            newCreds.refreshToken = encryptionService.encrypt(newCreds.refreshToken)
-        }
-
+        newCreds.secret = encryptionService.encrypt(newCreds.secret)
+        newCreds.refreshToken = encryptionService.encrypt(newCreds.refreshToken)
         userCredentialRepository.save(newCreds)
 
         return secret

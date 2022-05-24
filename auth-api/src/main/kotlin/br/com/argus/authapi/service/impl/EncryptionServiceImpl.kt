@@ -20,6 +20,10 @@ class EncryptionServiceImpl(
     private val secretSize: Int
 ) : EncryptionService {
     override fun encrypt(raw: String): String {
+        if(raw.isEmpty()){
+            return raw
+        }
+
         val salt = KeyGenerators.string().generateKey()
 
         return Encryptors.text(secretKey, salt)
@@ -27,6 +31,10 @@ class EncryptionServiceImpl(
     }
 
     override fun decrypt(digest: String): String {
+        if(digest.isEmpty()){
+            return digest
+        }
+
         val salt = digest.substring(digest.length - 16)
 
         val hash = digest.substring(0, digest.length - 16)

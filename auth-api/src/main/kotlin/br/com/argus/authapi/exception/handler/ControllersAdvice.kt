@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import kotlin.math.log
 
 @RestControllerAdvice
 class ControllersAdvice {
@@ -26,6 +27,16 @@ class ControllersAdvice {
 
         return ErrorResponseDTO("001", message)
     }
+
+    @ExceptionHandler(value = [IllegalArgumentException::class])
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleIllegalArgumentException(ex: IllegalArgumentException): ErrorResponseDTO{
+
+        ex.printStackTrace()
+
+        return ErrorResponseDTO("001", "Provided payload are invalid or malformed")
+    }
+
 
     @ExceptionHandler(value = [BadCredentialsException::class])
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
