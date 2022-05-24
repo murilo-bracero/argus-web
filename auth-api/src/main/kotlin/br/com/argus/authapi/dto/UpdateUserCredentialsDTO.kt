@@ -10,9 +10,6 @@ import javax.validation.constraints.NotNull
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class UpdateUserCredentialsDTO(
-    @field:OriginSystemValid
-    val userSystem: SystemEnum = SystemEnum.UNKNOWN,
-
     val mfaEnabled: Boolean?,
     val accountExpired: Boolean?,
     val accountLocked: Boolean?,

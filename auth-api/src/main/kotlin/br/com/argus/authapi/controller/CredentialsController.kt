@@ -8,6 +8,8 @@ import br.com.argus.authapi.model.UserCredential
 import br.com.argus.authapi.service.CredentialsService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.*
 import javax.validation.Valid
@@ -27,12 +29,13 @@ class CredentialsController(
         credentialsService.createCredential(UserCredential.from(request))
     }
 
-    @PatchMapping("/{userId}")
+    @PatchMapping
     fun updateCredentials(
-        @PathVariable @NotBlank @Size(min = 24, max = 24) userId: String,
         @RequestBody @Valid request: UpdateUserCredentialsDTO
     ): UpdateUserCredentialsResponseDTO {
-        val creds = credentialsService.find(userId = userId, system = request.userSystem)
+        val principal = SecurityContextHolder.getContext().authentication.principal as UserCredential
+
+        val creds = credentialsService.find(userId = principal.userId, system = principal.system)
 
         request.fill(creds)
 
