@@ -1,7 +1,8 @@
 package br.com.argus.authapi.config
 
-import br.com.argus.authapi.filters.JwtTokenFilter
+import br.com.argus.authapi.filters.JwtAuthenticationFilter
 import br.com.argus.authapi.service.CredentialsService
+import br.com.argus.authapi.service.UserAuthenticationService
 import br.com.argus.authapi.utils.JwtUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -14,17 +15,16 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import javax.servlet.http.HttpServletResponse
 
 @Configuration
 @EnableWebSecurity
 class WebSecurityAdapterConfig(
+    @Autowired private val jwtUtils: JwtUtils,
     @Autowired private val credentialsService: CredentialsService,
-    @Autowired private val jwtUtils: JwtUtils
 ) : WebSecurityConfigurerAdapter() {
 
-    @Profile("local")
-    @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
         http.cors().and().csrf().disable()
 
@@ -39,7 +39,11 @@ class WebSecurityAdapterConfig(
                 )
             }
 
-        http.authorizeRequests().anyRequest().permitAll()
+        http.authorizeRequests().antMatchers(HttpMethod.POST, "/auth").permitAll()
+        http.authorizeRequests().antMatchers(HttpMethod.GET, "/auth/refresh").permitAll()
+        http.authorizeRequests().anyRequest().authenticated()
+
+        http.addFilterBefore(JwtAuthenticationFilter(jwtUtils, credentialsService, listOf("/auth", "/auth/refresh")), UsernamePasswordAuthenticationFilter::class.java)
     }
 
     @Bean

@@ -46,19 +46,23 @@ class CredentialsServiceImpl(
             creds.secret = encryptionService.decrypt(creds.secret)
         }
 
+        if(creds.refreshToken.isNotEmpty()){
+            creds.refreshToken = encryptionService.decrypt(creds.refreshToken)
+        }
+
         return creds
     }
 
     override fun update(newCreds: UserCredential) : String? {
-        if (!newCreds.mfaEnabled){
-            return ""
-        }
-
         var secret: String? = null
 
         if(newCreds.mfaEnabled && newCreds.secret.isEmpty()){
             secret = encryptionService.generateSecret()
             newCreds.secret = encryptionService.encrypt(secret)
+        }
+
+        if(newCreds.refreshToken.isNotEmpty()){
+            newCreds.refreshToken = encryptionService.encrypt(newCreds.refreshToken)
         }
 
         userCredentialRepository.save(newCreds)

@@ -5,6 +5,7 @@ import br.com.argus.authapi.dto.UpdateUserCredentialsDTO
 import br.com.argus.authapi.model.SystemEnum
 import br.com.argus.authapi.model.UserCredential
 import br.com.argus.authapi.service.CredentialsService
+import br.com.argus.authapi.utils.JwtUtils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
@@ -33,10 +35,14 @@ import kotlin.NoSuchElementException
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension::class)
 @WebMvcTest(controllers = [CredentialsController::class])
+@AutoConfigureMockMvc(addFilters = false)
 class CredentialsControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
+    @MockkBean
+    lateinit var jwtUtils: JwtUtils
 
     @MockkBean
     lateinit var service: CredentialsService

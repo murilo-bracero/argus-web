@@ -6,9 +6,6 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.mapping.Field
-import org.springframework.security.crypto.encrypt.TextEncryptor
-import org.springframework.security.crypto.password.PasswordEncoder
-import java.security.SecureRandom
 import java.time.LocalDateTime
 
 @Document(collection = "user_credentials")
@@ -34,6 +31,8 @@ class UserCredential(
     var credentialsExpired: Boolean = false,
 
     var isEnabled: Boolean = true,
+
+    var refreshToken: String = "",
 
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 

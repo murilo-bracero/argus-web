@@ -4,5 +4,5 @@ enum class SystemEnum(val collection: String) {
 
     CUSTOMER("customers"),
     TECHNICIAN("technicians"),
-    UNKNOWN("_")
+    UNKNOWN("_");
 }

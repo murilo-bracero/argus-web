@@ -32,6 +32,8 @@ dependencies {
 	}
 	testImplementation("com.ninja-squad:springmockk:3.0.1")
 	testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
+	testImplementation("org.springframework.security:spring-security-test:5.7.1")
+
 }
 
 tasks.withType<KotlinCompile> {

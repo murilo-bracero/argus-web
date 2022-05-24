@@ -8,6 +8,7 @@ import com.auth0.jwt.interfaces.Claim
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.*
+import kotlin.collections.HashMap
 
 @Component
 class JwtUtils(
@@ -29,13 +30,21 @@ class JwtUtils(
             .withSubject(userId)
             .withClaim("system", system.toString())
 
+
         return Tokens(
             builder.withExpiresAt(Date(System.currentTimeMillis() + expiration)).sign(algorithm),
             builder.withExpiresAt(Date(System.currentTimeMillis() + refreshExpiration)).sign(algorithm),
         )
     }
 
-    fun verify(token: String): Map<String, Claim> {
-        TODO()
+    fun verify(token: String): Map<String, String> {
+        val decoded = JWT.require(Algorithm.HMAC512(secret))
+            .build()
+            .verify(token)
+
+        val map = HashMap<String, String>()
+        map["id"] = decoded.subject
+        map["system"] = decoded.claims["system"].toString().replace("\"", "")
+        return map
     }
 }

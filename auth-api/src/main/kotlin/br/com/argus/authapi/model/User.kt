@@ -12,9 +12,6 @@ class User(
     val id: ObjectId = ObjectId.get(),
 
     @Indexed(unique = true)
-    val cpf: String,
-
-    @Indexed(unique = true)
     val email: String,
 
     @Field("password")
