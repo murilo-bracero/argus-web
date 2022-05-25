@@ -1,9 +1,6 @@
 package br.com.argus.authapi.grpc
 
-import br.com.argus.authapi.AuthApiServiceGrpc
-import br.com.argus.authapi.CreateCredentialsRequest
-import br.com.argus.authapi.SYSTEM_ENUM
-import br.com.argus.authapi.ValidateTokenRequest
+import br.com.argus.authapi.*
 import br.com.argus.authapi.model.SystemEnum
 import br.com.argus.authapi.model.User
 import br.com.argus.authapi.model.UserCredential
@@ -118,6 +115,22 @@ class AuthServiceGrpcTest {
             .build()
 
         assertThrows<StatusRuntimeException> { authServiceGrpc.validateToken(req) }
+    }
+
+    @Test
+    fun `should remove successfully credentials from user`() {
+        ifNotSave()
+
+        val req = RemoveCredentialsRequest.newBuilder()
+            .setUserId(user.id.toHexString())
+            .setSystem(SYSTEM_ENUM.CUSTOMER)
+            .build()
+
+        authServiceGrpc.deleteCredentials(req)
+
+        assertThrows<NoSuchElementException> {
+            credentialsService.find(user.id.toHexString(), SystemEnum.CUSTOMER)
+        }
     }
 
     private fun ifNotSave(){

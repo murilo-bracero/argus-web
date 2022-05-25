@@ -7,6 +7,7 @@ option java_multiple_files = true;
 service AuthApiService {
   rpc createCredentials (CreateCredentialsRequest) returns (Void) {}
   rpc validateToken(ValidateTokenRequest) returns (Credentials) {}
+  rpc deleteCredentials(RemoveCredentialsRequest) returns (Void) {}
 }
 
 message Void {
@@ -18,6 +19,11 @@ enum SYSTEM_ENUM {
 }
 
 message CreateCredentialsRequest{
+  string userId = 1;
+  SYSTEM_ENUM system = 2;
+}
+
+message RemoveCredentialsRequest{
   string userId = 1;
   SYSTEM_ENUM system = 2;
 }

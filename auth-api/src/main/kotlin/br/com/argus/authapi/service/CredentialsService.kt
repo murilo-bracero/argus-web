@@ -7,7 +7,7 @@ interface CredentialsService {
 
     fun createCredential(cred: UserCredential)
 
-    fun remove(userEmail: String = "", userId: String = "")
+    fun remove(userId: String, system: SystemEnum)
 
     fun find(userId: String, system: SystemEnum): UserCredential
 

@@ -35,9 +35,11 @@ class CredentialsServiceImpl(
 
     }
 
-    override fun remove(userEmail: String, userId: String) {
-        TODO("Not yet implemented")
+    override fun remove(userId: String, system: SystemEnum) {
+        userCredentialRepository.findByUserIdAndSystem(userId, system)
+            .ifPresent { userCredentialRepository.deleteById(it.id) }
     }
+
 
     override fun find(userId: String, system: SystemEnum): UserCredential {
         val creds = userCredentialRepository.findByUserIdAndSystem(userId, system)

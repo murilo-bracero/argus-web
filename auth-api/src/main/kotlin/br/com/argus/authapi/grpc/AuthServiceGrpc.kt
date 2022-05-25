@@ -31,4 +31,11 @@ class AuthServiceGrpc(
 
         return credentialsService.find(id, system).to()
     }
+
+    override suspend fun deleteCredentials(request: RemoveCredentialsRequest): Void {
+
+        credentialsService.remove(request.userId, SystemEnum.valueOf(request.system.name))
+
+        return Void.newBuilder().build()
+    }
 }
