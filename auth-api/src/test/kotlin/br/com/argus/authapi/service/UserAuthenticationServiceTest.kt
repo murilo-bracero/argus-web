@@ -32,7 +32,7 @@ import javax.security.auth.login.AccountLockedException
 @ActiveProfiles("test")
 @SpringBootTest
 @ExtendWith(SpringExtension::class)
-internal class UserAuthenticationServiceTest {
+class UserAuthenticationServiceTest {
 
     @Autowired
     private lateinit var userAuthenticationServiceImpl: UserAuthenticationServiceImpl

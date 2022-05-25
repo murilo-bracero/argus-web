@@ -5,18 +5,19 @@ import com.ninjasquad.springmockk.MockkBean
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.junit.jupiter.SpringExtension
 
-internal class EncryptionServiceTest {
+@ActiveProfiles("test")
+@SpringBootTest
+@ExtendWith(SpringExtension::class)
+class EncryptionServiceTest {
 
+    @Autowired
     private lateinit var encryptionService: EncryptionServiceImpl
-
-    private val secretKey = "supersecretkey"
-    private val secretSize = 16
-
-    @BeforeEach
-    fun setUp(){
-        encryptionService = EncryptionServiceImpl(secretKey, secretSize)
-    }
 
     @Test
     fun `should encrypt data correctly based on key given`(){

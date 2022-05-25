@@ -1,6 +1,5 @@
 package br.com.argus.authapi.service
 
-import br.com.argus.authapi.model.AuthResultEnum
 import br.com.argus.authapi.model.SystemEnum
 import br.com.argus.authapi.model.User
 

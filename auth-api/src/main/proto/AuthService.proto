@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package br.com.argus.authapi;
+
+option java_multiple_files = true;
+
+service AuthApiService {
+  rpc createCredentials (CreateCredentialsRequest) returns (Void) {}
+  rpc validateToken(ValidateTokenRequest) returns (Credentials) {}
+}
+
+message Void {
+}
+
+enum SYSTEM_ENUM {
+  CUSTOMER = 0;
+  TECHNICIAN = 1;
+}
+
+message CreateCredentialsRequest{
+  string userId = 1;
+  SYSTEM_ENUM system = 2;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message Credentials {
+    string id = 1;
+    string userId = 2;
+    bool mfaEnabled  = 3;
+    SYSTEM_ENUM system = 4;
+    bool accountExpired = 5;
+    bool accountLocked = 6;
+    bool credentialsExpired = 7;
+    bool isEnabled = 8;
+    string updatedAt = 9;
+}

@@ -9,3 +9,4 @@ class AuthApiApplication
 fun main(args: Array<String>) {
 	runApplication<AuthApiApplication>(*args)
 }
+

@@ -1,3 +1,7 @@
+grpc:
+  server:
+    port: ${APP_GRPC_PORT}
+
 security:
   jwt:
     refresh_expiration: ${REFRESH_JWT_EXPIRATION}

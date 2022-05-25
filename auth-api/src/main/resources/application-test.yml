@@ -1,7 +1,11 @@
+grpc:
+  server:
+    port: 8090
+
 security:
   jwt:
-    refresh_expiration: 600
-    expiration: 300
+    refresh_expiration: 600000
+    expiration: 300000
     secret: secret
   secret-key: SQ56EgzwqTOddVKy3c3bfqugDkUxRxqy546Dc7eeLhAz3bARXHNc
   secret-size: 20
