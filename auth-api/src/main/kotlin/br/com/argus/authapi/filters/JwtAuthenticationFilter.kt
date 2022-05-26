@@ -3,7 +3,6 @@ package br.com.argus.authapi.filters
 import br.com.argus.authapi.model.SystemEnum
 import br.com.argus.authapi.service.CredentialsService
 import br.com.argus.authapi.utils.JwtUtils
-import com.auth0.jwt.exceptions.TokenExpiredException
 import org.springframework.http.HttpHeaders.AUTHORIZATION
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -45,6 +44,6 @@ class JwtAuthenticationFilter(
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        return bypassPath.filter { request.servletPath.equals(it) }.isNotEmpty()
+        return bypassPath.any { request.servletPath.equals(it) }
     }
 }

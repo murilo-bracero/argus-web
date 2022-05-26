@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "br.com.argus"
-version = "0.0.1"
+version = "0.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {

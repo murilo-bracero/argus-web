@@ -5,6 +5,7 @@ import br.com.argus.customer_backend.dto.CustomerResponseDTO
 import br.com.argus.customer_backend.dto.ErrorResponseDTO
 import br.com.argus.customer_backend.models.Customer
 import br.com.argus.customer_backend.repositories.CustomerRepository
+import br.com.argus.customer_backend.services.CustomerService
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
@@ -23,11 +24,21 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.http.MediaType
+import org.springframework.security.config.annotation.web.WebSecurityConfigurer
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
@@ -36,18 +47,32 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.lang.RuntimeException
 import java.util.*
+import kotlin.NoSuchElementException
 import kotlin.collections.HashMap
 
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension::class)
-@WebMvcTest(controllers = [CustomerController::class])
+@WebMvcTest(controllers = [CustomerController::class],
+    excludeFilters = [ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        value = arrayOf(WebSecurityConfigurer::class)
+    )],
+    excludeAutoConfiguration = [
+        SecurityAutoConfiguration::class,
+        SecurityFilterAutoConfiguration::class,
+        OAuth2ClientAutoConfiguration::class,
+        OAuth2ResourceServerAutoConfiguration::class
+    ])
 class CustomerControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
 
     @MockkBean
-    lateinit var customerRepository: CustomerRepository
+    lateinit var customerService: CustomerService
+
+    @MockkBean
+    lateinit var passwordEncoderMock: PasswordEncoder
 
     private val passwordEncoder = BCryptPasswordEncoder()
 
@@ -64,9 +89,12 @@ class CustomerControllerTest {
             "teste1.928",
         )
 
-        every { customerRepository.save(any()) } returns Customer.from(request, passwordEncoder)
+        every { customerService.save(any()) } returns Customer.from(request, passwordEncoder)
+        every { passwordEncoderMock.encode(eq(request.password)) } returns passwordEncoder.encode(request.password)
 
-        mockMvc.perform(post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(
+            post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isCreated)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.cpf").isString)
@@ -87,9 +115,11 @@ class CustomerControllerTest {
             "arnaldo.franco@email.com",
         )
 
-        every { customerRepository.save(any()) } returns Customer.from(request, passwordEncoder)
+        every { customerService.save(any()) } returns Customer.from(request, passwordEncoder)
 
-        val res = mockMvc.perform(post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -115,9 +145,16 @@ class CustomerControllerTest {
             "teste1.928",
         )
 
-        every { customerRepository.save(any()) } throws MongoWriteException(WriteError(0, "error", BsonDocument()), ServerAddress())
+        every { customerService.save(any()) } throws MongoWriteException(
+            WriteError(0, "error", BsonDocument()),
+            ServerAddress()
+        )
+        every { passwordEncoderMock.encode(eq(request.password)) } returns passwordEncoder.encode(request.password)
 
-        val res = mockMvc.perform(post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON))
+
+        val res = mockMvc.perform(
+            post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isConflict)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -143,9 +180,11 @@ class CustomerControllerTest {
             "teste1.928",
         )
 
-        every { customerRepository.save(any()) } throws RuntimeException("generic expression")
+        every { customerService.save(any()) } throws RuntimeException("generic expression")
 
-        val res = mockMvc.perform(post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            post("/customers").content(mapper.writeValueAsString(request)).contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().is5xxServerError)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -168,10 +207,12 @@ class CustomerControllerTest {
 
         val customer = Customer(id, "15428547548", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
 
-        every { customerRepository.findById(id) } returns Optional.of(customer)
+        every { customerService.findOne(id = any()) } returns customer
 
-        val res = mockMvc.perform(get("/customers/" + id.toHexString())
-            .contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            get("/customers/" + id.toHexString())
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.cpf").isString)
@@ -193,10 +234,12 @@ class CustomerControllerTest {
     @DisplayName("should return 404 error with code 003 when given ID does not exists in database")
     fun testGetCustomerById404() {
 
-        every { customerRepository.findById(any()) } returns Optional.empty()
+        every { customerService.findOne(id = any()) } throws NoSuchElementException()
 
-        val raw = mockMvc.perform(get("/customers/${ObjectId.get()}")
-            .contentType(MediaType.APPLICATION_JSON))
+        val raw = mockMvc.perform(
+            get("/customers/${ObjectId.get()}")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -214,12 +257,15 @@ class CustomerControllerTest {
     @DisplayName("should return customer info when valid and existent customer CPF were given")
     fun testGetCustomerByCPF200() {
 
-        val customer = Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
+        val customer =
+            Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
 
-        every { customerRepository.findByCpf(any()) } returns Optional.of(customer)
+        every { customerService.findOne(cpf = any()) } returns customer
 
-        val res = mockMvc.perform(get("/customers?cpf=" + customer.cpf)
-            .contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            get("/customers?cpf=" + customer.cpf)
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.cpf").isString)
@@ -241,10 +287,12 @@ class CustomerControllerTest {
     @DisplayName("should return 404 error with code 003 when given cpf does not own a correspondent customer registered in database")
     fun testGetCustomerByCPF404() {
 
-        every { customerRepository.findByCpf(any()) } returns Optional.empty()
+        every { customerService.findOne(cpf = any()) } throws NoSuchElementException()
 
-        val raw = mockMvc.perform(get("/customers?cpf=72646019513")
-            .contentType(MediaType.APPLICATION_JSON))
+        val raw = mockMvc.perform(
+            get("/customers?cpf=72646019513")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -262,8 +310,10 @@ class CustomerControllerTest {
     @DisplayName("should return 400 error with code 001 when given cpf are invalid or malformed")
     fun testGetCustomerByCPF400() {
 
-        val raw = mockMvc.perform(get("/customers?cpf=testecpf")
-            .contentType(MediaType.APPLICATION_JSON))
+        val raw = mockMvc.perform(
+            get("/customers?cpf=testecpf")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -281,12 +331,15 @@ class CustomerControllerTest {
     @DisplayName("should return customer info when valid and existent customer Email were given")
     fun testGetCustomerByEmail200() {
 
-        val customer = Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
+        val customer =
+            Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap())
 
-        every { customerRepository.findByEmail(any()) } returns Optional.of(customer)
+        every { customerService.findOne(email = any()) } returns customer
 
-        val res = mockMvc.perform(get("/customers?email=" + customer.email)
-            .contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            get("/customers?email=" + customer.email)
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.cpf").isString)
@@ -303,14 +356,17 @@ class CustomerControllerTest {
 
         assertEquals(customer.email, customerRes.email)
     }
+
     @Test
     @DisplayName("should return 404 error with code 003 when given email does not own a correspondent customer registered in database")
     fun testGetCustomerByEmail404() {
 
-        every { customerRepository.findByEmail(any()) } returns Optional.empty()
+        every { customerService.findOne(email = any()) } throws NoSuchElementException()
 
-        val raw = mockMvc.perform(get("/customers?email=teste2@email.com")
-            .contentType(MediaType.APPLICATION_JSON))
+        val raw = mockMvc.perform(
+            get("/customers?email=teste2@email.com")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)
@@ -333,10 +389,12 @@ class CustomerControllerTest {
             Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap()),
         )
 
-        every { customerRepository.findByNameLike(any(), any()) } returns PageImpl(customers)
+        every { customerService.findMany(name = any(), any()) } returns PageImpl(customers)
 
-        val res = mockMvc.perform(get("/customers?name=Generic")
-            .contentType(MediaType.APPLICATION_JSON))
+        val res = mockMvc.perform(
+            get("/customers?name=Generic")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.totalElements").isNumber)
@@ -364,10 +422,12 @@ class CustomerControllerTest {
             Customer(ObjectId(), "72646019513", "Generic Name", "email@email.com", "passwordhash", "", HashMap()),
         )
 
-        every { customerRepository.findByNameLike(any(), any()) } returns PageImpl(customers)
+        every { customerService.findMany(name = any(), any()) } returns PageImpl(customers)
 
-        val raw = mockMvc.perform(get("/customers?name=Generic&order=FRE")
-            .contentType(MediaType.APPLICATION_JSON))
+        val raw = mockMvc.perform(
+            get("/customers?name=Generic&order=FRE")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.code").isString)

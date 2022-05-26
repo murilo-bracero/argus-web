@@ -15,9 +15,6 @@ server:
   servlet:
     context-path: /authapi
 
-service-urls:
-  customer-service: ${CUSTOMER_SERVICE_URL}
-
 spring:
   data:
     mongodb:

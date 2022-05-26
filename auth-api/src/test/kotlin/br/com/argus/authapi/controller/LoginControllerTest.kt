@@ -1,11 +1,12 @@
 package br.com.argus.authapi.controller
 
-import br.com.argus.authapi.dto.CustomerResponseDTO
 import br.com.argus.authapi.dto.LoginRequestDTO
 import br.com.argus.authapi.exception.AuthNeedsMfaException
-import br.com.argus.authapi.model.*
+import br.com.argus.authapi.model.SystemEnum
+import br.com.argus.authapi.model.Tokens
+import br.com.argus.authapi.model.User
+import br.com.argus.authapi.model.UserCredential
 import br.com.argus.authapi.service.CredentialsService
-import br.com.argus.authapi.service.CustomerService
 import br.com.argus.authapi.service.UserAuthenticationService
 import br.com.argus.authapi.utils.JwtUtils
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -51,26 +52,16 @@ class LoginControllerTest {
     @MockkBean
     lateinit var service: UserAuthenticationService
 
-    @MockkBean lateinit var customerService: CustomerService
-
     private lateinit var mapper: ObjectMapper
-    private lateinit var customer: CustomerResponseDTO
     private lateinit var user: User
 
     @BeforeEach
     fun setUp(){
         mapper = ObjectMapper()
-        customer = CustomerResponseDTO(
-            ObjectId.get().toHexString(),
-            "33142523073",
-            "generic.email@mail.com",
-            "Generic Name",
-            "",
-            HashMap()
-        )
+
         user = User(
-            ObjectId(customer.id),
-            customer.email,
+            ObjectId.get(),
+            "generic.email@mail.com",
             "hashpassword"
             )
 
@@ -83,25 +74,18 @@ class LoginControllerTest {
     @Test
     @DisplayName("Should return 200 and user information if provided credentials without mfa are correct")
     fun login200(){
-        val req = LoginRequestDTO(customer.email, "genericPassword", SystemEnum.CUSTOMER)
+        val req = LoginRequestDTO(user.email, "genericPassword", SystemEnum.CUSTOMER)
 
-        every { jwtUtils.generateToken(eq(customer.id), eq(SystemEnum.CUSTOMER)) } returns Tokens("mocked_access_token", "mocked_refresh_token")
+        every { jwtUtils.generateToken(eq(user.id.toHexString()), eq(SystemEnum.CUSTOMER)) } returns Tokens("mocked_access_token", "mocked_refresh_token")
         every { service.login(eq(req.email), eq(req.password), null, eq(SystemEnum.CUSTOMER)) } returns user
-        every { customerService.findByEmail(eq(req.email)) } returns customer
         every { credentialsService.update(any()) } returns ""
 
         mockMvc.perform(
             MockMvcRequestBuilders.post("/auth").content(mapper.writeValueAsString(req)).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.user.id").exists())
-            .andExpect(jsonPath("$.user.cpf").exists())
-            .andExpect(jsonPath("$.user.name").exists())
-            .andExpect(jsonPath("$.user.email").exists())
-            .andExpect(jsonPath("$.user.email").value(req.email))
-            .andExpect(jsonPath("$.user.profilePicUri").exists())
-            .andExpect(jsonPath("$.user.favs").exists())
-
+            .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.accessToken").exists())
         verify(exactly = 1) { service.login(any(), any(), null, eq(SystemEnum.CUSTOMER)) }
     }
 

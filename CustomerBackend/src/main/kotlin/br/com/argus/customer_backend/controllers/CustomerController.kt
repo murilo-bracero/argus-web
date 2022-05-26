@@ -6,6 +6,7 @@ import br.com.argus.customer_backend.dto.CustomerResponseDTO
 import br.com.argus.customer_backend.dto.ErrorResponseDTO
 import br.com.argus.customer_backend.models.Customer
 import br.com.argus.customer_backend.repositories.CustomerRepository
+import br.com.argus.customer_backend.services.CustomerService
 import br.com.argus.customer_backend.utils.isCpfValid
 import com.mongodb.MongoWriteException
 import org.bson.types.ObjectId
@@ -28,7 +29,7 @@ import kotlin.NoSuchElementException
 @RequestMapping("/customers")
 class CustomerController(
     @Autowired private val passwordEncoder: PasswordEncoder,
-    @Autowired private val customerRepository: CustomerRepository
+    @Autowired private val customerService: CustomerService
 ) {
 
     @PostMapping
@@ -36,15 +37,12 @@ class CustomerController(
     fun createCustomer(@Valid @RequestBody request: CustomerRequestDTO): CustomerResponseDTO {
         val customer = Customer.from(request, passwordEncoder)
 
-        return customerRepository.save(customer).to()
+        return customerService.save(customer).to()
     }
 
     @GetMapping("/{id}")
     fun getCustomerById(@PathVariable id: String): CustomerResponseDTO {
-        val customer = customerRepository.findById(ObjectId(id))
-            .orElseThrow()
-
-        return customer.to()
+        return customerService.findOne(id = ObjectId(id)).to()
     }
 
     @GetMapping(params = ["cpf"])
@@ -53,18 +51,12 @@ class CustomerController(
             throw InvalidPropertiesFormatException("cpf is invalid or malformed")
         }
 
-        val customer = customerRepository.findByCpf(cpf)
-            .orElseThrow()
-
-        return customer.to()
+        return customerService.findOne(cpf = cpf).to()
     }
 
     @GetMapping(params = ["email"])
     fun getCustomerByEmail(@RequestParam email: String): CustomerResponseDTO {
-        val customer = customerRepository.findByEmail(email)
-            .orElseThrow()
-
-        return customer.to()
+        return customerService.findOne(email = email).to()
     }
 
     @GetMapping
@@ -78,10 +70,10 @@ class CustomerController(
         val pageRequest: Pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.valueOf(order.uppercase()), "name"))
 
         if(name.isNullOrEmpty()) {
-            return customerRepository.findAll(pageRequest).map { it.to() }
+            return customerService.findMany(pageable = pageRequest).map { it.to() }
         }
 
-        return customerRepository.findByNameLike(name, pageRequest).map { it.to() }
+        return customerService.findMany(name, pageRequest).map { it.to() }
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -98,8 +90,8 @@ class CustomerController(
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = [(NoSuchElementException::class)])
-    fun handleNoSuchElementException(): ErrorResponseDTO {
-        return ErrorResponseDTO("003", "customer with provided id does not exists")
+    fun handleNoSuchElementException(ex: NoSuchElementException): ErrorResponseDTO {
+        return ErrorResponseDTO("003", "customer with provided ${ex.message} does not exists")
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)

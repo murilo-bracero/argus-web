@@ -1,9 +1,8 @@
 package br.com.argus.authapi.service
 
 import br.com.argus.authapi.service.impl.EncryptionServiceImpl
-import com.ninjasquad.springmockk.MockkBean
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,7 +1,16 @@
+retry:
+  max-retry: 3
+
 server:
   port: ${APP_PORT}
   servlet:
     context-path: /argusweb
+
+services:
+  rest:
+    auth-api: ${AUTH_API_REST_BASE_URL}
+  grpc:
+    auth-api: ${AUTH_API_GRPC_BASE_URL}
 
 spring:
   data:

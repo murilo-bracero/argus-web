@@ -1,11 +1,8 @@
 package br.com.argus.authapi.dto
 
-import br.com.argus.authapi.annotations.OriginSystemValid
-import br.com.argus.authapi.model.SystemEnum
 import br.com.argus.authapi.model.UserCredential
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import javax.validation.constraints.NotNull
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
