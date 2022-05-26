@@ -13,7 +13,7 @@ security:
 server:
   port: 8080
   servlet:
-    context-path: /argusweb
+    context-path: /authapi
 
 service-urls:
   customer-service: http://localhost:8080/argusweb/customers
