@@ -1,9 +1,51 @@
 server:
-  port: ${APP_PORT}
+  port: ${APP_PORT:8080}
   servlet:
-    context-path: /argusweb
+    context-path: /customer-backend
+
+retry:
+  max-attempts: ${RETRY_MAX_ATTEMPTS:3}
+  backoff: ${RETRY_BACKOFF:1000}
+  backoffMultiplier: ${RETRY_BACKOFF_MULTIPLIER:2}
+
+services:
+  keycloak:
+    createUserUri: ${SERVICES_KEYCLOAK_HOST}/admin/realms/${IDP_REALM}/users
+
+idp:
+  appName: ${IDP_APP_NAME}
+  serviceAccount: ${IDP_SERVICE_ACCOUNT}
+  tokenUri: ${SERVICES_KEYCLOAK_HOST}/realms/${IDP_REALM}/protocol/openid-connect/token
 
 spring:
   data:
     mongodb:
+      auto-index-creation: true
       uri: ${MONGO_URI}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWK_SET_URI}
+          issuer-uri: ${JWT_ISSUER_URL}
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: INFO

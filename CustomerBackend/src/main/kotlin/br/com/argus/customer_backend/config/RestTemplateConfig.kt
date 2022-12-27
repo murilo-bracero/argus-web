@@ -1,4 +1,4 @@
-package br.com.argus.authapi.config
+package br.com.argus.customer_backend.config
 
 import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.context.annotation.Bean
@@ -9,7 +9,8 @@ import org.springframework.web.client.RestTemplate
 class RestTemplateConfig {
 
     @Bean
-    fun restTemplate(builder: RestTemplateBuilder): RestTemplate {
-        return builder.build()
+    fun restTemplate(): RestTemplate{
+        return RestTemplateBuilder().build()
     }
+
 }

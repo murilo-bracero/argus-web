@@ -13,10 +13,7 @@ security:
 server:
   port: ${APP_PORT}
   servlet:
-    context-path: /argusweb
-
-service-urls:
-  customer-service: ${CUSTOMER_SERVICE_URL}
+    context-path: /authapi
 
 spring:
   data:

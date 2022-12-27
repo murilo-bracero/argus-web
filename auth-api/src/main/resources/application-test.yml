@@ -13,10 +13,7 @@ security:
 server:
   port: 8080
   servlet:
-    context-path: /argusweb
-
-service-urls:
-  customer-service: http://localhost:8080/argusweb/customers
+    context-path: /authapi
 
 spring:
   data:

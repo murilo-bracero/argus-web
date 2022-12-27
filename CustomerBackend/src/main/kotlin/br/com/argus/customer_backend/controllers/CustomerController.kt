@@ -1,111 +1,68 @@
 package br.com.argus.customer_backend.controllers
 
-import br.com.argus.customer_backend.annotations.CpfValid
-import br.com.argus.customer_backend.dto.CustomerRequestDTO
-import br.com.argus.customer_backend.dto.CustomerResponseDTO
-import br.com.argus.customer_backend.dto.ErrorResponseDTO
-import br.com.argus.customer_backend.models.Customer
-import br.com.argus.customer_backend.repositories.CustomerRepository
+import br.com.argus.customer_backend.dto.CreateCustomerRequest
+import br.com.argus.customer_backend.dto.CustomerResponse
+import br.com.argus.customer_backend.mapper.CustomerMapper
+import br.com.argus.customer_backend.services.CustomerService
 import br.com.argus.customer_backend.utils.isCpfValid
-import com.mongodb.MongoWriteException
+import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.MethodParameter
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Sort.Direction
 import org.springframework.http.HttpStatus
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.*
 import java.util.*
-import javax.validation.Valid
-import javax.validation.constraints.Size
-import kotlin.NoSuchElementException
 
 @RestController
 @RequestMapping("/customers")
 class CustomerController(
-    @Autowired private val passwordEncoder: PasswordEncoder,
-    @Autowired private val customerRepository: CustomerRepository
+    @Autowired private val customerService: CustomerService
 ) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun createCustomer(@Valid @RequestBody request: CustomerRequestDTO): CustomerResponseDTO {
-        val customer = Customer.from(request, passwordEncoder)
+    fun createCustomer(@Valid @RequestBody request: CreateCustomerRequest): CustomerResponse {
+        val customer = customerService.save(request)
 
-        return customerRepository.save(customer).to()
+        return CustomerMapper.toDto(customer)
     }
 
     @GetMapping("/{id}")
-    fun getCustomerById(@PathVariable id: String): CustomerResponseDTO {
-        val customer = customerRepository.findById(ObjectId(id))
-            .orElseThrow()
+    fun getCustomerById(@PathVariable id: String): CustomerResponse {
+        val customer = customerService.findById(id)
 
-        return customer.to()
+        return CustomerMapper.toDto(customer)
     }
 
     @GetMapping(params = ["cpf"])
-    fun getCustomerByCpf(@RequestParam cpf: String): CustomerResponseDTO {
+    fun getCustomerByCpf(@RequestParam cpf: String): CustomerResponse {
         if (!isCpfValid(cpf)) {
             throw InvalidPropertiesFormatException("cpf is invalid or malformed")
         }
 
-        val customer = customerRepository.findByCpf(cpf)
-            .orElseThrow()
+        val customer = customerService.findByCpf(cpf)
 
-        return customer.to()
-    }
-
-    @GetMapping(params = ["email"])
-    fun getCustomerByEmail(@RequestParam email: String): CustomerResponseDTO {
-        val customer = customerRepository.findByEmail(email)
-            .orElseThrow()
-
-        return customer.to()
+        return CustomerMapper.toDto(customer)
     }
 
     @GetMapping
-    fun getCustomersByName(
-        @RequestParam(required = false) name: String?,
-        @RequestParam(defaultValue = "50") size: Int,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "ASC") order: String
-    ): Page<CustomerResponseDTO> {
+    fun getAllCustomers(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") size: Int,
+        @RequestParam(required = false, defaultValue = "ASC") direction: String) : Page<CustomerResponse> {
 
-        val pageRequest: Pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.valueOf(order.uppercase()), "name"))
+        val pageRequest = PageRequest.of(page, size, Direction.valueOf(direction), "id")
 
-        if(name.isNullOrEmpty()) {
-            return customerRepository.findAll(pageRequest).map { it.to() }
-        }
+        val pageCustomer = customerService.findAll(pageRequest)
 
-        return customerRepository.findByNameLike(name, pageRequest).map { it.to() }
+        return pageCustomer.map { CustomerMapper.toDto(it) }
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(value = [(IllegalArgumentException::class)])
-    fun handleIllegalArgumentException(): ErrorResponseDTO {
-        return ErrorResponseDTO("004", "Provided parameter is invalid or malformed")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun removeCustomer(@PathVariable id: String){
+        customerService.delete(ObjectId(id))
     }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(value = [(InvalidPropertiesFormatException::class)])
-    fun handleInvalidPropertiesFormatException(ex: InvalidPropertiesFormatException): ErrorResponseDTO {
-        return ErrorResponseDTO("001", ex.message.orEmpty())
-    }
-
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler(value = [(NoSuchElementException::class)])
-    fun handleNoSuchElementException(): ErrorResponseDTO {
-        return ErrorResponseDTO("003", "customer with provided id does not exists")
-    }
-
-    @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(value = [(MongoWriteException::class)])
-    fun handleException(): ErrorResponseDTO {
-        return ErrorResponseDTO("002", "customer already exists")
-    }
-
 }
