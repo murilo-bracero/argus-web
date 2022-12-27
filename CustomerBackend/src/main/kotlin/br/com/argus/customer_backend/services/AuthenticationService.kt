@@ -1,13 +1,11 @@
 package br.com.argus.customer_backend.services
 
-import br.com.argus.authapi.Credentials
+import br.com.argus.customer_backend.dto.CreateCredentialsRequest
 
 interface AuthenticationService {
 
-    fun authenticate(token: String): Credentials
+    fun createCredentials(createCredentialsRequest: CreateCredentialsRequest)
 
-    fun createCredentials(userId: String)
-
-    fun deleteCredentials(userId: String)
+    fun deleteCredentials(idpId: String)
 
 }

@@ -1,8 +1,8 @@
 package br.com.argus.customer_backend.annotations
 
 import br.com.argus.customer_backend.validators.CpfValidator
-import javax.validation.Constraint
-import javax.validation.Payload
+import jakarta.validation.Constraint
+import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)

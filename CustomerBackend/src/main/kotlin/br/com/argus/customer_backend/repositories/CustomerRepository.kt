@@ -13,7 +13,5 @@ interface CustomerRepository : MongoRepository<Customer, ObjectId> {
 
     fun findByCpf(cpf: String): Optional<Customer>
 
-    fun findByEmail(email: String): Optional<Customer>
-
     fun findByNameLike(name: String, pageable: Pageable): Page<Customer>
 }

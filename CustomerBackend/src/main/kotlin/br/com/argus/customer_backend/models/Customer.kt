@@ -1,54 +1,40 @@
 package br.com.argus.customer_backend.models
 
-import br.com.argus.customer_backend.dto.CustomerRequestDTO
-import br.com.argus.customer_backend.dto.CustomerResponseDTO
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.data.mongodb.core.mapping.Field
 
 @Document(collection = "customers")
 class Customer(
+
     @Id
+    @Field("_id")
     val id: ObjectId = ObjectId.get(),
 
     @Indexed(unique = true)
-    val cpf: String,
+    val cpf: String = "",
 
-    val name: String,
+    val name: String = "",
 
-    @Indexed(unique = true)
-    val email: String,
+    @Field("phone_number")
+    val phoneNumber: String = "",
 
-    val password: String,
+    val email: String = "",
 
-    val profilePicUri: String,
+    @Field("profile_pic_uri")
+    val profilePicUri: String = "",
 
-    val favs: Map<String, String> = HashMap()
-) {
-    companion object {
-        fun from(dto: CustomerRequestDTO, pe: PasswordEncoder): Customer {
-            return Customer(
-                ObjectId.get(),
-                dto.cpf,
-                dto.name,
-                dto.email,
-                pe.encode(dto.password),
-                dto.profilePicUri,
-                HashMap()
-            )
-        }
-    }
+    val address: Address = Address(),
 
-    fun to(): CustomerResponseDTO {
-        return CustomerResponseDTO(
-            id.toHexString(),
-            cpf,
-            name,
-            email,
-            profilePicUri,
-            favs
-        )
-    }
-}
+    @Field("favourite_technicians")
+    val favouriteTechnicians: List<ObjectId> = ArrayList(),
+
+    @Field("idp_id")
+    val idpId: String = "",
+
+    val devices: List<ObjectId> = ArrayList(),
+
+    val history: List<ObjectId> = ArrayList()
+)
