@@ -15,6 +15,6 @@ WORKDIR /authapi
 
 EXPOSE $rest_port $grpc_port
 
-COPY --from=builder /builder/build/libs/CustomerBackend.jar app.jar
+COPY --from=builder /builder/build/libs/customer-backend.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
