@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.argus";
+option java_outer_classname = "IdpIntegrationProto";
+
+package idpintegration;
+
+service IdpIntegrationService {
+  rpc createUser(CreateUserRequest) returns (CreateUserResponse) {};
+  rpc deleteUser(DeleteUserRequest) returns (Void) {};
+}
+
+message CreateUserRequest{
+  string email = 1;
+  string password = 2;
+}
+
+message CreateUserResponse{
+  string idpId = 1;
+}
+
+message DeleteUserRequest{
+  string idpId = 1;
+}
+
+message Void{}
