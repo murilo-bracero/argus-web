@@ -17,7 +17,6 @@ class GrpcIdpIntegrationService(
     @Inject private val idpService: IdpService
 ): IdpIntegrationService {
 
-    @Blocking
     override fun createUser(request: CreateUserRequest?): Uni<CreateUserResponse> {
         if(request == null){
             throw IdpIntegrationException("IDP001", "Provided request is null")
@@ -27,11 +26,9 @@ class GrpcIdpIntegrationService(
             throw IdpIntegrationException("IDP002", "Email or Password must not be null")
         }
 
-        val idpId = idpService.createUser(request.email, request.password)
-
-        return Uni.createFrom().item{
-            CreateUserResponse.newBuilder().setIdpId(idpId).build()
-        }
+        return idpService.createUser(request.email, request.password)
+            .onItem()
+            .transform { CreateUserResponse.newBuilder().setIdpId(it).build() }
     }
 
     @Blocking
@@ -44,8 +41,8 @@ class GrpcIdpIntegrationService(
             throw IdpIntegrationException("IDP003", "idpId must not be null")
         }
 
-        idpService.deleteUser(request.idpId)
-
-        return Uni.createFrom().item { Void.newBuilder().build() }
+        return idpService.deleteUser(request.idpId)
+            .onItem()
+            .transform { Void.newBuilder().build() }
     }
 }
